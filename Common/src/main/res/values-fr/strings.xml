@@ -2892,6 +2892,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
         <item quantity="one">%d entrée</item>
         <item quantity="other">%d entrées</item>
     </plurals>
+    <string name="journal_chart_smb_description">SMB %1$s</string>
     <string name="watch_transport_section">Transport</string>
     <string name="watch_wearos_enable_desc">Activer le transport de messages Wear OS</string>
     <string name="watch_gms_unavailable">Services Google Play indisponibles</string>

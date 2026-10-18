@@ -68,7 +68,7 @@ import tk.glucodata.data.journal.JournalPendingDeleteEntity
  * A version bump also needs its exported schema JSON committed — the CI schema
  * check in H1 catches that.
  */
-internal const val HISTORY_DATABASE_VERSION = 32
+internal const val HISTORY_DATABASE_VERSION = 33
 
 @Database(
     entities = [
@@ -721,6 +721,15 @@ abstract class HistoryDatabase : RoomDatabase() {
             }
         }
 
+        /** v32 → v33: mark insulin doses that were super micro boluses (AAPS SMBs). */
+        private val MIGRATION_32_33 = object : Migration(32, 33) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                if (!hasColumn(db, "journal_entries", "isSmb")) {
+                    db.execSQL("ALTER TABLE journal_entries ADD COLUMN isSmb INTEGER NOT NULL DEFAULT 0")
+                }
+            }
+        }
+
         /**
          * The Clone-owned tables and the identity backfills, idempotently. Kept
          * separate from [ensureV30Compatibility] because that one is also what a
@@ -810,7 +819,8 @@ abstract class HistoryDatabase : RoomDatabase() {
             bridgeCloneToV30(28),
             bridgeCloneToV30(29),
             MIGRATION_30_31,
-            MIGRATION_31_32
+            MIGRATION_31_32,
+            MIGRATION_32_33
         )
 
         fun getInstance(context: Context): HistoryDatabase =

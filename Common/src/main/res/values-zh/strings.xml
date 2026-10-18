@@ -2901,6 +2901,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
         <item quantity="one">%d 条记录</item>
         <item quantity="other">%d 条记录</item>
     </plurals>
+    <string name="journal_chart_smb_description">SMB %1$s</string>
     <string name="watch_transport_section">传输</string>
     <string name="watch_wearos_enable_desc">启用 Wear OS 消息传输</string>
     <string name="watch_gms_unavailable">Google Play 服务不可用</string>

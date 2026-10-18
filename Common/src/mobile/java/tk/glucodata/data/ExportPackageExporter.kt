@@ -1098,6 +1098,7 @@ object ExportPackageExporter {
             .put("insulinCurveEvidence", insulinCurveEvidence ?: JSONObject.NULL)
             .put("insulinBodyWeightKg", insulinBodyWeightKg?.toDouble() ?: JSONObject.NULL)
             .put("insulinCurveWasApproximated", insulinCurveWasApproximated)
+            .put("isSmb", isSmb)
     }
 
     private fun JournalInsulinPresetEntity.toJson(): JSONObject {
@@ -1245,7 +1246,8 @@ object ExportPackageExporter {
                         insulinCurveWasApproximated = item.optBoolean(
                             "insulinCurveWasApproximated",
                             false
-                        )
+                        ),
+                        isSmb = item.optBoolean("isSmb", false)
                     )
                 )
             }

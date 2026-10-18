@@ -197,7 +197,9 @@ class JournalRepository {
                     !isInsulin -> false
                     preserveCurveSnapshot -> existing?.insulinCurveWasApproximated ?: true
                     else -> resolvedCurve?.approximated ?: true
-                }
+                },
+                // An edit made in the journal does not know the flag; it stays with the dose.
+                isSmb = isInsulin && (input.isSmb || existing?.isSmb == true)
             )
             val rowId = dao.upsertEntry(entity)
             if (isCloneJournalExportSource(entity.source)) {
@@ -931,7 +933,8 @@ private fun JournalEntryEntity.toModel(): JournalEntry {
         insulinCurveModelVersion = insulinCurveModelVersion,
         insulinCurveEvidence = insulinCurveEvidence?.let { JournalCurveEvidence.fromStorage(it) },
         insulinBodyWeightKg = insulinBodyWeightKg,
-        insulinCurveWasApproximated = insulinCurveWasApproximated
+        insulinCurveWasApproximated = insulinCurveWasApproximated,
+        isSmb = isSmb
     )
 }
 

@@ -3071,6 +3071,7 @@ Marka la cadaadiyo OK waxay dhalin doontaa xidhiidh teleefankan oo waxa ay soo b
         <item quantity="one">%d qoraal</item>
         <item quantity="other">%d qoraal</item>
     </plurals>
+    <string name="journal_chart_smb_description">SMB %1$s</string>
     <string name="watch_transport_section">Gudbinta</string>
     <string name="watch_wearos_enable_desc">Daar gudbinta fariimaha Wear OS</string>
     <string name="watch_gms_unavailable">Adeegyada Google Play lama heli karo</string>

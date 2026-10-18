@@ -3289,7 +3289,8 @@ fun InteractiveGlucoseChart(
                     bandEnd >= viewportStart && bandStart <= viewportEnd
                 }
                 if (visibleJournalMarkers.isNotEmpty()) {
-                    val visibleInsulinMarkers = visibleJournalMarkers.filter { it.type == JournalEntryType.INSULIN }
+                    // SMBs are drawn as triangles under the line by the overlay, not as curves.
+                    val visibleInsulinMarkers = visibleJournalMarkers.filter { it.type == JournalEntryType.INSULIN && !it.isSmb }
                     val visibleEventMarkers = visibleJournalMarkers.filter { it.type != JournalEntryType.INSULIN }
 
                     if (visibleInsulinMarkers.isNotEmpty()) {
@@ -3630,6 +3631,7 @@ fun InteractiveGlucoseChart(
             val journalChipReachMillis = (journalChipReachPx * overlayDuration / overlayDataWidthPx).toLong()
             val chipMarkers = journalMarkers
                 .filter { marker ->
+                    !marker.isSmb &&
                     marker.timestamp in (overlayViewportStart - journalChipReachMillis)..(overlayViewportEnd + journalChipReachMillis)
                 }
                 .sortedWith(compareBy({ it.timestamp }, { it.entryId }))
@@ -3911,6 +3913,78 @@ fun InteractiveGlucoseChart(
                 chipPilePosition[index] == 0 || chipPeeks[index] != null ||
                     openChipGroup?.contains(index) == true ||
                     !chipMotions[index].isSettled
+            }
+
+            // SMBs: a triangle just under the glucose line where each was given, sized by its
+            // dose, the way Nightscout and AAPS mark them. One with no line near it sits on the
+            // bottom edge instead, so a dose given during a gap is not lost.
+            val smbMarkers = journalMarkers.filter { marker ->
+                marker.isSmb && marker.timestamp in overlayViewportStart..overlayViewportEnd
+            }
+            if (smbMarkers.isNotEmpty()) {
+                val smbLine = chartModel.primary
+                val smbGapPx = with(LocalDensity.current) { 6.dp.toPx() }
+                val smbMinSidePx = with(LocalDensity.current) { 7.dp.toPx() }
+                val smbExtraSidePx = with(LocalDensity.current) { 5.dp.toPx() }
+                val smbEdgeInsetPx = with(LocalDensity.current) { 2.dp.toPx() }
+                val smbPlacements = smbMarkers.map { marker ->
+                    val x = overlayDataWidthPx * ((marker.timestamp - overlayViewportStart).toFloat() / overlayDuration)
+                    val side = smbTriangleSide(marker.amount, smbMinSidePx, smbExtraSidePx)
+                    val height = side * SMB_TRIANGLE_HEIGHT_RATIO
+                    val lineY = smbLine?.lineValueNear(marker.timestamp, SMB_LINE_TOLERANCE_MILLIS)
+                        ?.let(overlayValueToY)
+                        ?.takeIf { it.isFinite() }
+                    val top = (lineY?.plus(smbGapPx) ?: chartHeightPx)
+                        .coerceAtMost(chartHeightPx - height - smbEdgeInsetPx)
+                        .coerceAtLeast(0f)
+                    SmbTrianglePlacement(marker, x, top, side, height)
+                }
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(1.3f)
+                ) {
+                    val path = Path()
+                    smbPlacements.forEach { placement ->
+                        path.reset()
+                        path.moveTo(placement.x, placement.top)
+                        path.lineTo(placement.x + placement.side / 2f, placement.top + placement.height)
+                        path.lineTo(placement.x - placement.side / 2f, placement.top + placement.height)
+                        path.close()
+                        val tint = Color(placement.marker.accentColor)
+                        drawPath(path, tint.copy(alpha = tint.alpha * 0.9f))
+                    }
+                }
+                val smbTouchPx = with(LocalDensity.current) { SMB_TOUCH_SIZE.toPx() }
+                smbPlacements.forEach { placement ->
+                    val marker = placement.marker
+                    val description = stringResource(R.string.journal_chart_smb_description, marker.detailText)
+                    key("smb", marker.entryId) {
+                        // Stable, so the input handler keyed on it does not restart each frame.
+                        val currentOnClick by rememberUpdatedState(onJournalMarkerClick)
+                        val activate = remember {
+                            {
+                                expandedJournalChipId = null
+                                currentOnClick?.invoke(marker.entryId)
+                                Unit
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .zIndex(1.3f)
+                                .offset {
+                                    androidx.compose.ui.unit.IntOffset(
+                                        x = (placement.x - smbTouchPx / 2f).roundToInt(),
+                                        y = (placement.top + placement.height / 2f - smbTouchPx / 2f).roundToInt()
+                                    )
+                                }
+                                .size(SMB_TOUCH_SIZE)
+                                .journalMarkerInput(activeJournalMarkerPointers, activate, minimumTouchSize = false)
+                                .semantics { contentDescription = description }
+                        )
+                    }
+                }
             }
 
             Canvas(
@@ -5290,6 +5364,27 @@ private class JournalChipMotion(private var spot: JournalChipSpot, private var t
     }
 }
 
+/** Where an SMB triangle is drawn: its apex at ([x], [top]). */
+private class SmbTrianglePlacement(
+    val marker: JournalChartMarker,
+    val x: Float,
+    val top: Float,
+    val side: Float,
+    val height: Float,
+)
+
+private const val SMB_TRIANGLE_HEIGHT_RATIO = 0.87f
+private const val SMB_FULL_SIZE_UNITS = 2f
+/** A reading this close either side of an SMB places it; Dexcom's five-minute spacing fits. */
+private const val SMB_LINE_TOLERANCE_MILLIS = 6 * 60_000L
+private val SMB_TOUCH_SIZE = 24.dp
+
+/** The triangle grows with the dose, reaching full size at [SMB_FULL_SIZE_UNITS]. */
+internal fun smbTriangleSide(units: Float?, minSidePx: Float, extraSidePx: Float): Float {
+    val fraction = ((units ?: 0f) / SMB_FULL_SIZE_UNITS).takeIf { it.isFinite() }?.coerceIn(0f, 1f) ?: 0f
+    return minSidePx + extraSidePx * kotlin.math.sqrt(fraction)
+}
+
 @Composable
 private fun JournalMarkerChip(
     marker: JournalChartMarker,
@@ -5391,9 +5486,11 @@ private fun JournalMarkerChip(
 
 private fun Modifier.journalMarkerInput(
     activePointerIds: MutableSet<PointerId>,
-    activateMarker: () -> Unit
+    activateMarker: () -> Unit,
+    // An SMB's target stays small, so a tap on the line just above it still selects a reading.
+    minimumTouchSize: Boolean = true
 ): Modifier = this
-    .minimumInteractiveComponentSize()
+    .then(if (minimumTouchSize) Modifier.minimumInteractiveComponentSize() else Modifier)
     .semantics(mergeDescendants = true) {
         role = Role.Button
         onClick(action = {

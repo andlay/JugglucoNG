@@ -2928,6 +2928,7 @@
         <item quantity="many">%d wpisów</item>
         <item quantity="other">%d wpisu</item>
     </plurals>
+    <string name="journal_chart_smb_description">SMB %1$s</string>
     <string name="watch_transport_section">Transport</string>
     <string name="watch_wearos_enable_desc">Włącz przesyłanie wiadomości Wear OS</string>
     <string name="watch_gms_unavailable">Usługi Google Play niedostępne</string>

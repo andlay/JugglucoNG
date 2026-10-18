@@ -545,6 +545,7 @@ object SettingsExporter {
             .putNullable("insulinCurveEvidence", insulinCurveEvidence)
             .putNullable("insulinBodyWeightKg", insulinBodyWeightKg)
             .put("insulinCurveWasApproximated", insulinCurveWasApproximated)
+            .put("isSmb", isSmb)
     }
 
     private fun JournalInsulinPresetEntity.toJson(): JSONObject {
@@ -618,7 +619,8 @@ object SettingsExporter {
                         insulinCurveWasApproximated = item.optBoolean(
                             "insulinCurveWasApproximated",
                             false
-                        )
+                        ),
+                        isSmb = item.optBoolean("isSmb", false)
                     )
                 )
             }

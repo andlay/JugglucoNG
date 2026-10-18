@@ -2937,6 +2937,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
         <item quantity="many">%d записей</item>
         <item quantity="other">%d записи</item>
     </plurals>
+    <string name="journal_chart_smb_description">SMB %1$s</string>
     <string name="watch_transport_section">Транспорт</string>
     <string name="watch_wearos_enable_desc">Включить передачу сообщений Wear OS</string>
     <string name="watch_gms_unavailable">Сервисы Google Play недоступны</string>

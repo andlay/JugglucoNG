@@ -20,7 +20,7 @@ import org.robolectric.annotation.ConscryptMode
  * migration that drops a column or a table fails here.
  *
  * The starting points are the released schemas recovered in H2: v11
- * (1.1.2-Alpha) and v12 (1.1.3-Alpha). v32 is the current version. The row tests
+ * (1.1.2-Alpha) and v12 (1.1.3-Alpha). v33 is the current version. The row tests
  * matter most: Room migrations are the one place a bug permanently destroys
  * user history.
  */
@@ -240,6 +240,26 @@ class HistoryMigrationTest {
             assertTrue("recoveryId is assigned", !cursor.isNull(3))
             assertEquals("the preset curve is frozen into the entry", "basal-json", cursor.getString(4))
             assertEquals(1, cursor.getInt(5))
+        }
+        migrated.close()
+    }
+
+    @Test
+    fun anInsulinDoseFromV32IsNotAnSmb() {
+        helper.createDatabase(DB_NAME, 32).use { db ->
+            db.execSQL(
+                "INSERT INTO journal_entries " +
+                    "(id, timestamp, entryType, title, amount, source, sourceRecordId, createdAt, updatedAt) " +
+                    "VALUES (9, 9000, 'insulin', 'Fiasp', 0.4, 'nightscout', 'ns:x:insulin', 1, 2)"
+            )
+        }
+
+        val migrated = helper.runMigrationsAndValidate(DB_NAME, HISTORY_DATABASE_VERSION, true, *HistoryDatabase.ALL_MIGRATIONS)
+
+        migrated.query("SELECT amount, isSmb FROM journal_entries WHERE id = 9").use { cursor ->
+            assertTrue("the dose survived", cursor.moveToFirst())
+            assertEquals(0.4, cursor.getDouble(0), 0.001)
+            assertEquals("a dose stored before the flag existed is an ordinary dose", 0, cursor.getInt(1))
         }
         migrated.close()
     }

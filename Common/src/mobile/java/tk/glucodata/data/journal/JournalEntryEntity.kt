@@ -54,5 +54,8 @@ data class JournalEntryEntity(
      * every upload pass. Tracked separately from [nsUploadedAt] because the two
      * destinations succeed and fail independently.
      */
-    val lvUploadedAt: Long? = null
+    val lvUploadedAt: Long? = null,
+    /** An insulin dose a loop (AAPS) gave as a super micro bolus, drawn as a triangle on the chart. */
+    @ColumnInfo(defaultValue = "0")
+    val isSmb: Boolean = false
 )

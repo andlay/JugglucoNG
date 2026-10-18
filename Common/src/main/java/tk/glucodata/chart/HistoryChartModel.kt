@@ -89,6 +89,32 @@ data class ChartSeriesModel(
 
     fun valueAt(timestamp: Long): Float? = valueByTimestamp[timestamp]
 
+    /**
+     * Where the main line passes at [timestamp]: interpolated between the two points of a run
+     * either side of it, or the nearer one at a run's end. Null where no point of the line lies
+     * within [toleranceMillis], so a mark is not hung on a gap the line does not cross.
+     */
+    fun lineValueNear(timestamp: Long, toleranceMillis: Long): Float? {
+        var best: ChartPointModel? = null
+        for (run in runs) {
+            val points = run.points
+            if (points.isEmpty()) continue
+            val index = points.binarySearchBy(timestamp) { it.timestamp }
+            if (index >= 0) return points[index].value
+            val insertion = -index - 1
+            val before = points.getOrNull(insertion - 1)?.takeIf { timestamp - it.timestamp <= toleranceMillis }
+            val after = points.getOrNull(insertion)?.takeIf { it.timestamp - timestamp <= toleranceMillis }
+            if (before != null && after != null) {
+                val fraction = (timestamp - before.timestamp).toFloat() / (after.timestamp - before.timestamp)
+                return before.value + (after.value - before.value) * fraction
+            }
+            for (candidate in listOfNotNull(before, after)) {
+                if (best == null || closer(candidate.timestamp, best.timestamp, timestamp)) best = candidate
+            }
+        }
+        return best?.value
+    }
+
     /** Only the Auto lane owns sensor uncertainty. Never borrow an older interval. */
     fun uncertaintyAt(timestamp: Long, isRawLane: Boolean, sourceLane: Boolean): tk.glucodata.GlucoseUncertainty? {
         if (isRawLane) return null

@@ -3002,6 +3002,7 @@ Durch Drücken von „OK“ wird eine Verbindung auf diesem Telefon hergestellt 
         <item quantity="one">%d Eintrag</item>
         <item quantity="other">%d Einträge</item>
     </plurals>
+    <string name="journal_chart_smb_description">SMB %1$s</string>
     <string name="watch_transport_section">Übertragung</string>
     <string name="watch_wearos_enable_desc">Wear-OS-Nachrichtenübertragung aktivieren</string>
     <string name="watch_gms_unavailable">Google-Play-Dienste nicht verfügbar</string>

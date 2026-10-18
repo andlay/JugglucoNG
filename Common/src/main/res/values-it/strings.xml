@@ -2876,6 +2876,7 @@ Pressing OK will generate a connection on this phone and display a QR code that 
         <item quantity="one">%d voce</item>
         <item quantity="other">%d voci</item>
     </plurals>
+    <string name="journal_chart_smb_description">SMB %1$s</string>
     <string name="watch_transport_section">Trasporto</string>
     <string name="watch_wearos_enable_desc">Attiva il trasporto messaggi Wear OS</string>
     <string name="watch_gms_unavailable">Servizi Google Play non disponibili</string>

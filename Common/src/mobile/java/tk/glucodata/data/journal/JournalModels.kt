@@ -75,6 +75,8 @@ data class JournalEntry(
     val insulinCurveWasApproximated: Boolean = false,
     /** Where the content originated before it arrived through [source]. */
     val originSource: JournalEntrySource? = null,
+    /** An insulin dose a loop gave as a super micro bolus. */
+    val isSmb: Boolean = false,
 )
 
 data class JournalEntryInput(
@@ -98,6 +100,8 @@ data class JournalEntryInput(
     val nsRemoteId: String? = null,
     /** Authoritative source supplied by an importer, distinct from its transport. */
     val originSource: JournalEntrySource? = null,
+    /** An insulin dose a loop gave as a super micro bolus; ignored for other types. */
+    val isSmb: Boolean = false,
 )
 
 data class JournalFood(
@@ -219,7 +223,9 @@ data class JournalChartMarker(
     val durationMinutes: Int? = null,
     val curvePoints: List<JournalCurvePoint> = emptyList(),
     val activeStartMillis: Long? = null,
-    val activeEndMillis: Long? = null
+    val activeEndMillis: Long? = null,
+    /** Drawn as a triangle under the glucose line instead of a curve and chip. */
+    val isSmb: Boolean = false
 )
 
 data class JournalActiveInsulinSummary(

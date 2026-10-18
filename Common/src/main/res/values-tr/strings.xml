@@ -2914,6 +2914,7 @@ Tamam\'a basmak bağlantı için QR kod görüntüleyecektir. QR kodu diğer tel
         <item quantity="one">%d kayıt</item>
         <item quantity="other">%d kayıt</item>
     </plurals>
+    <string name="journal_chart_smb_description">SMB %1$s</string>
     <string name="watch_transport_section">Aktarım</string>
     <string name="watch_wearos_enable_desc">Wear OS mesaj aktarımını etkinleştir</string>
     <string name="watch_gms_unavailable">Google Play Hizmetleri kullanılamıyor</string>

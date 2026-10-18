@@ -301,4 +301,80 @@ class JournalTreatmentTransferTests {
         assertFalse(JournalTreatmentTransfer.isAapsSenderOnlyNote("xDrip"))
         assertFalse(JournalTreatmentTransfer.isAapsSenderOnlyNote(null))
     }
+
+    private fun parseInsulin(treatment: JSONObject) = JournalTreatmentTransfer.parseTreatment(
+        treatment = treatment,
+        source = JournalEntrySource.NIGHTSCOUT,
+        sourcePrefix = "nightscout:NSF-TEST",
+        insulinPresets = emptyList(),
+        stringResource = { "Insulin" },
+    )!!.inputs.single { it.type == JournalEntryType.INSULIN }
+
+    /** AAPS v1 upload of an SMB: a Correction Bolus with `type` and `isSMB`. */
+    @Test
+    fun anAapsV1SmbIsMarkedAsAnSmb() {
+        val smb = parseInsulin(
+            JSONObject()
+                .put("_id", "aaps-smb-1")
+                .put("eventType", "Correction Bolus")
+                .put("insulin", 0.35)
+                .put("type", "SMB")
+                .put("isSMB", true)
+                .put("enteredBy", "openaps://AndroidAPS")
+                .put("date", 1_718_928_000_000L)
+        )
+        assertTrue(smb.isSmb)
+        assertEquals(0.35f, smb.amount!!, 0.001f)
+    }
+
+    /** NSClient v3 names the bolus type only. */
+    @Test
+    fun anAapsV3SmbIsMarkedByItsTypeAlone() {
+        val smb = parseInsulin(
+            JSONObject()
+                .put("identifier", "aaps-smb-v3")
+                .put("eventType", "Correction Bolus")
+                .put("insulin", 0.2)
+                .put("type", "SMB")
+                .put("date", 1_718_928_300_000L)
+        )
+        assertTrue(smb.isSmb)
+    }
+
+    @Test
+    fun aNormalBolusIsNotAnSmb() {
+        val bolus = parseInsulin(
+            JSONObject()
+                .put("_id", "aaps-bolus-1")
+                .put("eventType", "Meal Bolus")
+                .put("insulin", 4.0)
+                .put("type", "NORMAL")
+                .put("isSMB", false)
+                .put("date", 1_718_928_600_000L)
+        )
+        assertFalse(bolus.isSmb)
+    }
+
+    /** Straight from AAPS: its NEW_TREATMENT broadcast carries the same bolus JSON it uploads. */
+    @Test
+    fun anSmbFromTheAapsBroadcastIsMarkedAsAnSmb() {
+        val parsed = JournalTreatmentTransfer.parseTreatment(
+            treatment = JSONObject()
+                .put("_id", "aaps-broadcast-smb")
+                .put("eventType", "Correction Bolus")
+                .put("insulin", 0.15)
+                .put("type", "SMB")
+                .put("isSMB", true)
+                .put("enteredBy", "openaps://AndroidAPS")
+                .put("date", 1_718_929_000_000L),
+            source = JournalEntrySource.AAPS,
+            sourcePrefix = "aaps",
+            insulinPresets = emptyList(),
+            stringResource = { "Insulin" },
+        )!!
+        val smb = parsed.inputs.single()
+        assertTrue(smb.isSmb)
+        assertEquals(JournalEntrySource.AAPS, smb.source)
+        assertEquals("aaps:aaps-broadcast-smb:insulin", smb.sourceRecordId)
+    }
 }

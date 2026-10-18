@@ -280,7 +280,8 @@ fun buildJournalChartMarkers(
                 entry.timestamp + (entry.durationMinutes.coerceAtLeast(1) * 60_000L)
             } else {
                 null
-            }
+            },
+            isSmb = entry.type == JournalEntryType.INSULIN && entry.isSmb
         )
     }
 }

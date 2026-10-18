@@ -68,6 +68,7 @@ object JournalTreatmentTransfer {
                     .put("isBasalInsulin", isBasal)
                     .put("insulinType", preset?.displayName ?: entry.title)
                     .put("notes", mergedNotes(if (isBasal) "Long-Acting" else "Rapid-Acting", entry.note))
+                if (entry.isSmb) json.put("isSMB", true)
                 preset?.let {
                     json.put("insulinOnsetMinutes", it.onsetMinutes)
                         .put("insulinDurationMinutes", it.durationMinutes)
@@ -246,6 +247,7 @@ object JournalTreatmentTransfer {
                     sourceRecordId = sourceRecordId(sourcePrefix, baseId, SOURCE_KIND_INSULIN),
                     nsRemoteId = nightscoutRemoteId,
                     originSource = originSource,
+                    isSmb = isSmbTreatment(treatment),
                 )
             )
         }
@@ -323,6 +325,15 @@ object JournalTreatmentTransfer {
             remoteId = remoteId
         )
     }
+
+    /**
+     * Whether a treatment is a super micro bolus. AAPS marks one with `isSMB` in its v1
+     * uploads and with `type: "SMB"` in both v1 and NSClient v3.
+     */
+    internal fun isSmbTreatment(treatment: JSONObject): Boolean =
+        treatment.optBoolean("isSMB", false) ||
+            treatment.optString("type").equals("SMB", ignoreCase = true) ||
+            treatment.optString("eventType").equals("SMB", ignoreCase = true)
 
     fun hasAnyRemoteIdentifier(treatment: JSONObject, remoteIds: Set<String>): Boolean {
         if (remoteIds.isEmpty()) return false
